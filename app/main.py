@@ -5,7 +5,7 @@ from app.api.main import api_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.requests_client = httpx.AsyncClient()
+    app.requests_client = httpx.AsyncClient(timeout=10.0)
     yield
     await app.requests_client.aclose()
 
