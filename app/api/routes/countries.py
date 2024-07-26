@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request
+from app.core.database import cursor, connection
+import json
 
 router = APIRouter()
 
@@ -18,19 +20,19 @@ async def get_countries_by_code(country_code: str, request: Request):
 @router.get("/regions")
 async def get_regions(request: Request):
     requests_client = request.app.requests_client
-    response = await requests_client.get("https://restcountries.com/v3.1/all")
-    data_countries = response.json()
-
-    connection = sqlite3.connect("thisdot_example.db")
-    cursor = connection.cursor()
-
-    cursor.execute("CREATE TABLE IF NOT EXISTS countries(name text, data text)")
     
-    for country in data_countries:
-        country_name = json.dumps(country["name"])
-        country_data = json.dumps(country)
-        cursor.execute("INSERT INTO countries VALUES(?, ?)", (country_name, country_data))
-        connection.commit()
+    table_count = cursor.execute("select count(name) from countries").fetchone()[0]
+
+    print (table_count)
+    if table_count == 0:
+        response = await requests_client.get("https://restcountries.com/v3.1/all")
+        data_countries = response.json()
+        
+        for country in data_countries:
+            country_name = json.dumps(country["name"])
+            country_data = json.dumps(country)
+            cursor.execute("INSERT INTO countries VALUES(?, ?)", (country_name, country_data))
+            connection.commit()
 
     result = cursor.execute("SELECT json_extract(data, '$.region') as region, group_concat(json_extract(name, '$.common')) AS countries FROM countries GROUP BY json_extract(data, '$.region')")
     return  result.fetchall()
@@ -38,19 +40,18 @@ async def get_regions(request: Request):
 @router.get("/languages")
 async def get_languages(request: Request):
     requests_client = request.app.requests_client
-    response = await requests_client.get("https://restcountries.com/v3.1/all")
-    data_countries = response.json()
+    
+    table_count = cursor.execute("select count(name) from countries").fetchone()[0]
 
-    connection = sqlite3.connect("thisdot_example.db")
-    cursor = connection.cursor()
-
-    cursor.execute("CREATE TABLE IF NOT EXISTS countries(name text, data text)")
-
-    for country in data_countries:
-        country_name = json.dumps(country["name"])
-        country_data = json.dumps(country)
-        cursor.execute("INSERT INTO countries VALUES(?, ?)", (country_name, country_data))
-        connection.commit()
+    if table_count == 0:
+        response = await requests_client.get("https://restcountries.com/v3.1/all")
+        data_countries = response.json()
+        
+        for country in data_countries:    
+            country_name = json.dumps(country["name"])
+            country_data = json.dumps(country)
+            cursor.execute("INSERT INTO countries VALUES(?, ?)", (country_name, country_data))
+            connection.commit()
 
     result = cursor.execute("SELECT json_extract(data, '$.languages') as languages, group_concat(json_extract(name, '$.common')) AS countries FROM countries GROUP BY json_extract(data, '$.languages')")
     return  result.fetchall()

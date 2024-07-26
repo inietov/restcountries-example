@@ -1,6 +1,4 @@
 import httpx
-import sqlite3
-import json
 from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
 from app.api.main import api_router
