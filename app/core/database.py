@@ -2,7 +2,7 @@ from fastapi import Request
 import sqlite3
 import json
 
-connection = sqlite3.connect("thisdot_example.db")
+connection = sqlite3.connect(":memory:")
 cursor = connection.cursor()
 
 cursor.execute("CREATE TABLE IF NOT EXISTS countries(name text, data text)")
